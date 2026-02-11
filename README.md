@@ -118,7 +118,16 @@ The running system may be implemented elsewhere.
 
 ---
 
+## Related repositories
 
+- **ClawShield** — Governance sidecar (policy + preflight)  
+  https://github.com/trendinghot/clawshield
+
+- **ClawLedger** — Witness ledger (immutable receipts)  
+  https://github.com/trendinghot/clawledger
+
+
+---
 
 \## License
 
