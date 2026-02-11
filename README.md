@@ -1,4 +1,4 @@
-\# OpenClaw
+\# OpenExec
 
 
 
@@ -6,7 +6,7 @@
 
 
 
-OpenClaw is responsible for \*doing work\* — not deciding whether work should be done.
+OpenExec is responsible for \*doing work\* — not deciding whether work should be done.
 
 
 
@@ -20,7 +20,7 @@ It executes tasks \*\*only after\*\* governance approval has been granted by Cla
 
 This project is part of a three-layer governed execution system:
 
-- **OpenClaw** executes actions deterministically.
+- **OpenExec** executes actions deterministically.
 - **ClawShield** governs whether actions are permitted before execution.
 - **ClawLedger** records immutable receipts of what was decided and why.
 
@@ -30,7 +30,7 @@ Together, they make autonomous systems legible, reviewable, and defensible.
 
 
 
-\## What OpenClaw does
+\## What OpenExec does
 
 
 
@@ -48,7 +48,7 @@ Together, they make autonomous systems legible, reviewable, and defensible.
 
 
 
-\## What OpenClaw does NOT do
+\## What OpenExec does NOT do
 
 
 
@@ -72,11 +72,11 @@ Together, they make autonomous systems legible, reviewable, and defensible.
 
 \- \*\*ClawShield\*\* decides \*whether\* an action may proceed  
 
-\- \*\*OpenClaw\*\* performs the action \*after approval\*
+\- \*\*OpenExec\*\* performs the action \*after approval\*
 
 
 
-OpenClaw trusts governance receipts.
+OpenExec trusts governance receipts.
 
 ClawShield never executes.
 
@@ -108,7 +108,7 @@ ClawShield never executes.
 
 
 
-This repository defines the \*\*execution contract\*\* for OpenClaw.
+This repository defines the \*\*execution contract\*\* for OpenExec.
 
 
 
