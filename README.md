@@ -16,6 +16,18 @@ It executes tasks \*\*only after\*\* governance approval has been granted by Cla
 
 ---
 
+## System architecture
+
+This project is part of a three-layer governed execution system:
+
+- **OpenClaw** executes actions deterministically.
+- **ClawShield** governs whether actions are permitted before execution.
+- **ClawLedger** records immutable receipts of what was decided and why.
+
+Execution, governance, and evidence are intentionally separated.
+No layer replaces another.
+Together, they make autonomous systems legible, reviewable, and defensible.
+
 
 
 \## What OpenClaw does
