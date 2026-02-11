@@ -13,7 +13,7 @@ OpenExec is responsible for \*doing work\* — not deciding whether work should 
 It executes tasks \*\*only after\*\* governance approval has been granted by ClawShield.
 
 
-
+“OpenExec is an independent open-source project and is not affiliated with any similarly named commercial products.”
 ---
 
 ## System architecture
