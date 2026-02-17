@@ -14,6 +14,7 @@ env:
   - CLAWSHIELD_PUBLIC_KEY
   - CLAWSHIELD_TENANT_ID
   - CLAWSHIELD_BASE_URL
+  - OPENEXEC_ALLOWED_ACTIONS
 description: Deterministic execution adapter that runs only with a signed approval artifact (ClawShield mode) and emits verifiable receipts.
 ---
 
@@ -147,6 +148,7 @@ curl -X POST http://localhost:5000/receipts/verify \
 * Executes deterministically (approved parameters only)
 * Emits verifiable receipts for every attempt
 * In ClawShield mode: verifies **signed approvals** before execution
+* Supports optional execution allow-list via environment variable
 
 ## What this skill does not do
 
@@ -155,6 +157,7 @@ curl -X POST http://localhost:5000/receipts/verify \
 * Reason autonomously
 * Override governance decisions
 * Self-authorize execution
+* Provide OS-level sandboxing or container isolation
 
 ---
 

@@ -194,6 +194,25 @@ ClawShield governance layer:
 
 ---
 
+## Optional: Execution Allow-List
+
+You can restrict which actions may execute at runtime.
+
+```bash
+export OPENEXEC_ALLOWED_ACTIONS=echo,send_email,charge_card
+```
+
+If set, any action not listed will be rejected before execution.
+
+This provides an additional safety boundary in environments where
+arbitrary tool names must not be executed even if approved.
+
+If unset, all actions pass to the execution registry.
+
+Minimal. Explicit. Optional.
+
+---
+
 ## Architecture (Simple and Intentional)
 
 ```
@@ -249,6 +268,42 @@ Propose -> Approve -> Execute -> Witness
 ```
 
 That separation prevents silent escalation.
+
+---
+
+## Threat Model (Read This)
+
+OpenExec is an execution boundary.
+
+It protects:
+
+- Against replay (duplicate execution)
+- Against forged approvals (in ClawShield mode)
+- Against unauthorized execution without approval
+- Against parameter mutation between approval and execution
+- Against silent execution without a receipt
+
+It does NOT protect against:
+
+- Prompt injection in the proposal layer
+- LLM hallucinations during action proposal
+- Malicious or careless approval logic
+- Compromised host environments
+- Kernel-level or container escape attacks
+- Supply-chain vulnerabilities in external tools
+
+OpenExec assumes:
+
+- The proposal layer is untrusted.
+- The execution environment should be isolated separately if high risk.
+- Governance decisions must originate outside the execution layer.
+
+If your threat model includes hostile code execution,
+add OS/container isolation (Docker, gVisor, Firecracker, etc.)
+beneath OpenExec.
+
+OpenExec enforces authority separation.
+It is not a sandbox.
 
 ---
 

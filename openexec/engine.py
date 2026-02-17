@@ -1,3 +1,4 @@
+import os
 import uuid
 import json
 import hashlib
@@ -8,6 +9,13 @@ from openexec.db import SessionLocal
 from openexec.tables import ExecutionLog
 from openexec.approval_validator import validate_approval, ApprovalError
 from sqlalchemy.exc import IntegrityError
+
+def _check_allow_list(action: str) -> None:
+    allowed = os.getenv("OPENEXEC_ALLOWED_ACTIONS", "")
+    if allowed:
+        allow_list = [a.strip() for a in allowed.split(",") if a.strip()]
+        if action not in allow_list:
+            raise ApprovalError(f"Action '{action}' is not in the execution allow-list")
 
 def execute(request: ExecutionRequest) -> ExecutionResult:
     db = SessionLocal()
@@ -22,6 +30,7 @@ def execute(request: ExecutionRequest) -> ExecutionResult:
                 receipt=_make_receipt(existing.id, existing.result)
             )
 
+        _check_allow_list(request.action)
         handler = get_action(request.action)
         payload = request.payload or {}
 

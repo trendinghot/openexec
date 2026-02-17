@@ -1,7 +1,7 @@
 # OpenExec Skill
 
 ## Overview
-OpenExec is a deterministic execution engine requiring external governance approval. It runs as a FastAPI service with SQLite storage, replay protection, receipt verification, and Ed25519 constitutional signature enforcement. Version 0.3.0.
+OpenExec is a deterministic execution engine requiring external governance approval. It runs as a FastAPI service with SQLite storage, replay protection, receipt verification, Ed25519 constitutional signature enforcement, and optional execution allow-list. Version 0.1.0.
 
 ## Recent Changes
 - 2026-02-17: Upgraded to Ed25519 signature verification (from HMAC-SHA256)
@@ -20,9 +20,9 @@ OpenExec is a deterministic execution engine requiring external governance appro
 - **Deployment**: Autoscale on Replit
 
 ### Key Files
-- `main.py` -- FastAPI app with /health, /ready, /version, /execute endpoints
+- `main.py` -- FastAPI app with /health, /ready, /version, /execute, /receipts/verify endpoints
 - `openexec/settings.py` -- Mode configuration (demo vs clawshield), reads env at call time
-- `openexec/engine.py` -- Execution engine with replay protection and constitutional enforcement
+- `openexec/engine.py` -- Execution engine with replay protection, constitutional enforcement, and allow-list
 - `openexec/crypto.py` -- Ed25519 signature verification, canonical SHA-256 hashing
 - `openexec/approval_validator.py` -- Approval artifact validation (hash, expiry, signature, tenant)
 - `openexec/clawshield_client.py` -- Ed25519 keypair generation and artifact minting (for testing)
@@ -42,6 +42,7 @@ OpenExec is a deterministic execution engine requiring external governance appro
 - `OPENEXEC_MODE` -- demo or clawshield
 - `CLAWSHIELD_PUBLIC_KEY` -- PEM-encoded Ed25519 public key (clawshield mode)
 - `CLAWSHIELD_TENANT_ID` -- Tenant identifier (clawshield mode)
+- `OPENEXEC_ALLOWED_ACTIONS` -- Comma-separated list of allowed actions (optional, all allowed if unset)
 
 ## User Preferences
 - GitHub as canonical source of truth
