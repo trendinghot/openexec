@@ -1,7 +1,7 @@
 ---
 name: OpenExec
 slug: openexec
-version: 0.1.1
+version: 0.1.3
 category: infrastructure/governance/execution
 runtime: python
 entrypoint: main:app
@@ -10,22 +10,26 @@ modes:
   - demo
   - clawshield
 env:
-  - OPENEXEC_MODE
-  - CLAWSHIELD_PUBLIC_KEY
-  - CLAWSHIELD_TENANT_ID
-  - CLAWSHIELD_BASE_URL
-  - OPENEXEC_ALLOWED_ACTIONS
-description: Deterministic execution adapter that runs only with a signed approval artifact (ClawShield mode) and emits verifiable receipts.
+  required: none
+  optional:
+    - OPENEXEC_MODE
+    - CLAWSHIELD_PUBLIC_KEY
+    - CLAWSHIELD_TENANT_ID
+    - OPENEXEC_ALLOWED_ACTIONS
+    - OPENEXEC_DB_URL
+description: Deterministic execution adapter that runs only with a signed approval artifact (ClawShield mode) and emits verifiable receipts. Performs no outbound network calls.
 ---
 
 # OpenExec — Governed Deterministic Execution (Skill)
 
-OpenExec is a **runnable** governed execution service.  
+OpenExec is a **runnable** governed execution service.
 It executes **only** what has already been approved.
 
-It is not an agent.  
-It is not a policy engine.  
+It is not an agent.
+It is not a policy engine.
 It does not self-authorize.
+
+OpenExec performs **no outbound network calls** during signature verification or execution. All verification is fully offline.
 
 ---
 
@@ -45,9 +49,9 @@ python -m uvicorn main:app --host 0.0.0.0 --port 5000
 
 ## Endpoints
 
-* `GET /` → must return 200 quickly (deployment health check)
-* `GET /health` → health status
-* `GET /ready` → readiness checks
+* `GET /` → service info (deployment health check)
+* `GET /health` → health status, mode, restriction level
+* `GET /ready` → readiness check
 * `GET /version` → version metadata
 * `POST /execute` → execute an approved action deterministically
 * `POST /receipts/verify` → verify receipt hash integrity
@@ -58,7 +62,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 5000
 
 ### 1) Demo mode (default, free)
 
-No external governance required. Useful for indie hackers.
+No external governance required. No env vars required.
 
 ```bash
 export OPENEXEC_MODE=demo
@@ -67,22 +71,37 @@ export OPENEXEC_MODE=demo
 Demo mode still enforces:
 
 * deterministic execution
-* replay protection (nonce/action hash)
+* replay protection (nonce uniqueness)
 * receipt generation
 
 ### 2) ClawShield mode (production / business)
 
 Requires a **signed approval artifact** issued by ClawShield.
-OpenExec verifies the signature offline using the ClawShield public key.
+OpenExec verifies the Ed25519 signature offline using the configured public key.
 
 ```bash
 export OPENEXEC_MODE=clawshield
 export CLAWSHIELD_PUBLIC_KEY="-----BEGIN PUBLIC KEY----- ... -----END PUBLIC KEY-----"
 export CLAWSHIELD_TENANT_ID="tenant-id"
-export CLAWSHIELD_BASE_URL="https://clawshield.forgerun.ai"
 ```
 
-If signature validation fails → execution is denied.
+If signature validation fails, execution is denied.
+
+> Note: ClawShield governance SaaS is available at [https://clawshield.forgerun.ai/](https://clawshield.forgerun.ai/). OpenExec does not contact this URL at runtime. It is provided for reference only.
+
+---
+
+## Environment Variables
+
+All environment variables are **optional**. OpenExec runs with zero configuration in demo mode.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENEXEC_MODE` | `demo` | Execution mode: `demo` or `clawshield` |
+| `CLAWSHIELD_PUBLIC_KEY` | (none) | PEM-encoded Ed25519 public key for signature verification |
+| `CLAWSHIELD_TENANT_ID` | (none) | Tenant identifier for multi-tenant isolation |
+| `OPENEXEC_ALLOWED_ACTIONS` | (none) | Comma-separated list of permitted actions. If unset, all registered actions are allowed |
+| `OPENEXEC_DB_URL` | `sqlite:///openexec.db` | Database URL for execution record persistence |
 
 ---
 
@@ -112,7 +131,7 @@ curl -X POST http://localhost:5000/execute \
   }'
 ```
 
-4. Replay attempt (should return same result, not re-execute):
+4. Replay attempt (returns same result, no re-execution):
 
 ```bash
 curl -X POST http://localhost:5000/execute \
@@ -128,10 +147,10 @@ curl -X POST http://localhost:5000/execute \
 
 ## Receipts
 
-Every execution attempt produces a receipt hash.
+Every execution produces a receipt hash.
 Receipts are **evidence**, not logs.
 
-Verify a receipt hash:
+Verify a receipt:
 
 ```bash
 curl -X POST http://localhost:5000/receipts/verify \
@@ -157,14 +176,27 @@ curl -X POST http://localhost:5000/receipts/verify \
 * Reason autonomously
 * Override governance decisions
 * Self-authorize execution
+* Make outbound network calls during execution
 * Provide OS-level sandboxing or container isolation
+
+---
+
+## Security Boundary Notice
+
+OpenExec enforces execution boundaries at the application layer.
+It does not provide OS-level sandboxing.
+Deploy behind containerization, VM isolation, or hardened environments
+when actions interact with production systems.
+
+OpenExec enforces authority separation.
+It is not a sandbox.
 
 ---
 
 ## Architecture context (3-layer separation)
 
-* **OpenExec** — deterministic execution adapter (this skill)
-* **ClawShield** — governance + approval minting (SaaS): [https://clawshield.forgerun.ai/](https://clawshield.forgerun.ai/)
-* **ClawLedger** — witness ledger (optional integration)
+* **OpenExec** -- deterministic execution adapter (this skill)
+* **ClawShield** -- governance + approval minting (SaaS): [https://clawshield.forgerun.ai/](https://clawshield.forgerun.ai/)
+* **ClawLedger** -- witness ledger (optional integration)
 
 Each layer is replaceable. No single layer can act alone.

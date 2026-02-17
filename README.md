@@ -339,6 +339,19 @@ It is not a sandbox.
 
 ---
 
+## Security Boundary Notice
+
+OpenExec enforces execution boundaries at the application layer.
+It does not provide OS-level sandboxing.
+Deploy behind containerization, VM isolation, or hardened environments
+when actions interact with production systems.
+
+This is an intentional architectural decision.
+OpenExec separates authority from execution.
+Infrastructure isolation is a separate concern.
+
+---
+
 ## What Happens If You Don't Add This Layer?
 
 Nothing.
@@ -376,6 +389,8 @@ Execution safety is invisible -- until it isn't.
 - Replay protection: enforced
 - Deterministic receipts: enforced
 - Signed approval validation: implemented (Ed25519)
+- Execution allow-list: supported (optional)
+- No outbound network calls during execution
 - No external dependencies required for testing
 
 ---
