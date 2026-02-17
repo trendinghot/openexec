@@ -1,131 +1,130 @@
 # OpenExec
-### Deterministic Execution for AI Systems That Touch the Real World
 
-Every major AI execution breach in 2025 had one thing in common:
-the model was allowed to execute directly.
+## Deterministic Execution Boundary for AI Systems
 
-If your AI can send emails, move money, delete data, or touch production --
-you need a hard boundary between **what it thinks** and **what it can execute**.
+OpenExec is a deterministic execution adapter that separates **proposal**, **authorization**, and **execution** in AI systems that interact with real-world infrastructure.
 
-OpenExec is that boundary.
+If an AI system can:
 
-It sits between your agent and your infrastructure and enforces one rule:
+- Send email
+- Move money
+- Modify infrastructure
+- Delete data
+- Call internal tools
 
-> Nothing executes without explicit approval.
+It should not execute what it merely proposes.
 
-Not "probably allowed."
-Not "the model decided."
-Not "it looked safe."
-
-Explicit approval. Deterministic execution. Verifiable receipts.
+OpenExec enforces that separation.
 
 ---
 
-## The Problem (You Already Know This)
+## Core Principle
 
-If you're building with:
+Nothing executes without explicit approval.
 
-- OpenAI function calls
-- Tool-using agents
-- LangChain / LlamaIndex / custom orchestration
-- Autonomous workflows
+Not inferred approval.
+Not model confidence.
+Not heuristic safety checks.
 
-You are already letting models generate execution payloads.
+Explicit approval.
+Deterministic execution.
+Verifiable receipts.
 
-That means:
+---
 
-- A hallucinated parameter can trigger a real API call.
-- A retry loop can duplicate a payment.
-- A subtle prompt injection can mutate execution intent.
-- A bug can execute twice.
-- A race condition can fire in parallel.
+## What Problem This Solves
 
-You don't need a smarter model.
+Modern AI stacks commonly collapse:
 
-You need an execution boundary.
+```
+Reasoning -> Authorization -> Execution
+```
+
+This creates failure modes such as:
+
+- Replay execution (duplicate payments)
+- Parameter mutation between intent and action
+- Escalation via prompt injection
+- Silent execution without auditability
+- Race conditions firing in parallel
+
+OpenExec forces architectural separation:
+
+```
+Propose -> Approve -> Execute -> Witness
+```
+
+Execution becomes an enforceable boundary instead of a side effect.
 
 ---
 
 ## What OpenExec Does
 
-OpenExec is a lightweight execution adapter that:
+OpenExec is a lightweight execution boundary that:
 
 - Accepts structured execution requests
-- Enforces replay protection
-- Optionally verifies signed approvals (ClawShield mode)
-- Executes deterministically
+- Enforces replay protection (nonce-based)
+- Performs deterministic hashing of execution inputs
+- Verifies signed approval artifacts (ClawShield mode)
+- Executes registered handlers deterministically
 - Emits a receipt for every execution attempt
-- Allows receipt verification
+- Allows independent receipt verification
 
-It does **not**:
+It does not:
 
 - Define policy
-- Make decisions
 - Evaluate prompts
-- Override governance
-- Self-authorize execution
+- Decide what should be approved
+- Grant permissions
+- Provide OS/container sandboxing
+- Override governance decisions
+- Make outbound network calls during execution
 
-It executes only what has already been approved.
+It executes only what has already been authorized.
 
 ---
 
-## 90-Second Quickstart (Demo Mode)
+## Quickstart (Demo Mode)
 
-You can test this right now.
-
-### 1) Install
+Install:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2) Run
+Run:
 
 ```bash
 python -m uvicorn main:app --host 0.0.0.0 --port 5000
 ```
 
-### 3) Confirm health
+Confirm health:
 
 ```bash
 curl http://localhost:5000/health
 ```
 
-### 4) Execute something deterministic
+Execute:
 
 ```bash
 curl -X POST http://localhost:5000/execute \
   -H "Content-Type: application/json" \
   -d '{
     "action": "echo",
-    "payload": { "msg": "hello world" },
-    "nonce": "unique-1"
+    "payload": {"msg":"hello world"},
+    "nonce":"unique-1"
   }'
 ```
 
-You'll get a receipt.
+Replay with same nonce -- returns original result without re-execution.
 
-Now try it again with the same nonce:
-
-```bash
-curl -X POST http://localhost:5000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "action": "echo",
-    "payload": { "msg": "hello world" },
-    "nonce": "unique-1"
-  }'
-```
-
-Replay denied.
-
-That alone prevents entire classes of production incidents.
+Replay protection prevents duplicate execution classes entirely.
 
 ---
 
 ## Verify a Receipt
 
-Every execution attempt produces a deterministic receipt.
+Every execution produces a deterministic receipt.
 
 ```bash
 curl -X POST http://localhost:5000/receipts/verify \
@@ -138,31 +137,7 @@ curl -X POST http://localhost:5000/receipts/verify \
 ```
 
 Receipts are evidence, not logs.
-
-Logs can be altered.
-Receipts can be verified.
-
----
-
-## How You'd Use This in Real Systems
-
-Instead of:
-
-```python
-send_email(to, subject, body)
-```
-
-You route through OpenExec:
-
-```python
-requests.post("http://localhost:5000/execute", json={
-    "action": "send_email",
-    "payload": {...},
-    "nonce": uuid4().hex
-})
-```
-
-In production, you enable strict mode.
+Logs can be altered. Receipts can be verified.
 
 ---
 
@@ -172,7 +147,6 @@ If your agent uses OpenAI function calling, route execution through OpenExec:
 
 ```python
 import requests
-from datetime import datetime
 from uuid import uuid4
 
 tool_call = model_output["tool_calls"][0]
@@ -191,35 +165,30 @@ if not result.get("approved"):
     raise Exception("Execution blocked by OpenExec")
 ```
 
-That's it. Your agent proposes. OpenExec decides whether it runs.
+The agent proposes. OpenExec determines whether it runs.
 
 ---
 
-## Production Mode (ClawShield)
+## Production Mode (Signed Approval Enforcement)
 
-For real systems, you don't want demo auto-approval.
-
-You want signed approvals issued by a governance layer.
-
-Enable:
+Enable strict governance enforcement:
 
 ```bash
 export OPENEXEC_MODE=clawshield
 export CLAWSHIELD_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
-export CLAWSHIELD_TENANT_ID="your-tenant-id"
+export CLAWSHIELD_TENANT_ID="tenant-id"
 ```
 
-Now:
+In this mode:
 
-- Execution requires a signed approval artifact.
-- Approval hash must match the request.
-- Signature must verify (Ed25519).
-- Expired approvals are rejected.
-- Tenant must match.
+- Execution requires a signed approval artifact
+- Approval hash must match execution request
+- Ed25519 signature must verify
+- Tenant must match
+- Expired approvals are rejected
+- No outbound network calls are performed during execution
 
-No live API dependency required during execution.
-
-This keeps authority separate from execution.
+Authority remains external to execution.
 
 ClawShield governance layer:
 [https://clawshield.forgerun.ai/](https://clawshield.forgerun.ai/)
@@ -228,158 +197,101 @@ ClawShield governance layer:
 
 ## Optional: Execution Allow-List
 
-You can restrict which actions may execute at runtime.
+Restrict which actions may execute:
 
 ```bash
 export OPENEXEC_ALLOWED_ACTIONS=echo,send_email,charge_card
 ```
 
-If set, any action not listed will be rejected before execution.
+If set:
 
-This provides an additional safety boundary in environments where
-arbitrary tool names must not be executed even if approved.
+- Any unlisted action is rejected prior to execution.
 
-If unset, all actions pass to the execution registry.
+If unset:
 
-Minimal. Explicit. Optional.
+- All registered actions are eligible (subject to approval mode).
 
 ---
 
-## Architecture (Simple and Intentional)
+## Architecture
 
 ```
 Agent / Client
-      |
-      v
-  OpenExec ---- deterministic execution adapter
-      |
-      v
-  ClawShield -- approval minting + governance (SaaS)
-      |
-      v
-  ClawLedger -- witness layer (optional)
+        |
+        v
+     OpenExec  -- deterministic execution boundary
+        |
+        v
+   ClawShield -- approval issuance (optional SaaS)
+        |
+        v
+   ClawLedger -- receipt witness layer (optional)
 ```
 
-Each layer is replaceable.
+Each layer is independently replaceable.
 
-No single layer can act alone.
+No layer can act alone.
 
-That separation is the point.
+That separation is intentional.
 
 ---
 
-## When You Actually Need This
+## Threat Model
 
-You don't need OpenExec for chatbots.
+OpenExec protects against:
 
-You need it when:
+- Replay execution (duplicate attempts)
+- Forged approval artifacts (ClawShield mode)
+- Parameter mutation after approval
+- Silent execution without receipt
+- Unauthorized execution without approval
 
-- Your AI can trigger payments
-- Your AI can modify infrastructure
-- Your AI can send production email
-- Your AI can call internal tools
-- Your AI can delete data
+OpenExec does NOT protect against:
 
-If your agent can act in the real world,
-it should not be allowed to execute what it merely imagines.
-
----
-
-## Why This Is Different
-
-Most AI stacks collapse:
-
-```
-Reasoning -> Authorization -> Execution
-```
-
-OpenExec forces:
-
-```
-Propose -> Approve -> Execute -> Witness
-```
-
-That separation prevents silent escalation.
-
----
-
-## Threat Model (Read This)
-
-OpenExec is an execution boundary.
-
-It protects:
-
-- Against replay (duplicate execution)
-- Against forged approvals (in ClawShield mode)
-- Against unauthorized execution without approval
-- Against parameter mutation between approval and execution
-- Against silent execution without a receipt
-
-It does NOT protect against:
-
-- Prompt injection in the proposal layer
-- LLM hallucinations during action proposal
-- Malicious or careless approval logic
-- Compromised host environments
-- Kernel-level or container escape attacks
-- Supply-chain vulnerabilities in external tools
+- Prompt injection in proposal layer
+- LLM hallucinations during proposal
+- Compromised approval logic
+- OS-level or container escape
+- Host compromise
+- Supply chain vulnerabilities in external tools
 
 OpenExec assumes:
 
-- The proposal layer is untrusted.
-- The execution environment should be isolated separately if high risk.
-- Governance decisions must originate outside the execution layer.
-
-If your threat model includes hostile code execution,
-add OS/container isolation (Docker, gVisor, Firecracker, etc.)
-beneath OpenExec.
-
-OpenExec enforces authority separation.
-It is not a sandbox.
+- The proposal layer is untrusted
+- Governance decisions originate externally
+- Infrastructure isolation is handled separately
 
 ---
 
 ## Security Boundary Notice
 
-OpenExec enforces execution boundaries at the application layer.
+OpenExec enforces execution authority separation at the application layer.
+
 It does not provide OS-level sandboxing.
-Deploy behind containerization, VM isolation, or hardened environments
-when actions interact with production systems.
 
-This is an intentional architectural decision.
-OpenExec separates authority from execution.
-Infrastructure isolation is a separate concern.
+For high-risk environments, deploy OpenExec inside:
 
----
+- Docker
+- gVisor
+- Firecracker
+- Hardened VM environments
 
-## What Happens If You Don't Add This Layer?
+Infrastructure isolation is a separate concern from execution authorization.
 
-Nothing.
-
-Until something goes wrong.
-
-And then:
-
-- Duplicate execution
-- Escalated permissions
-- Hallucinated parameters
-- Audit gaps
-- No evidence trail
-
-Execution safety is invisible -- until it isn't.
+This separation is deliberate.
 
 ---
 
 ## Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
 | `/` | GET | Service info |
-| `/health` | GET | Health status + mode + signature verification |
+| `/health` | GET | Health + mode + verification status |
 | `/ready` | GET | Readiness check |
 | `/version` | GET | Version metadata |
-| `/execute` | POST | Execute an approved action |
-| `/receipts/verify` | POST | Verify receipt hash integrity |
+| `/execute` | POST | Execute approved action |
+| `/receipts/verify` | POST | Verify receipt integrity |
 
 ---
 
@@ -388,16 +300,17 @@ Execution safety is invisible -- until it isn't.
 - Demo mode: stable
 - Replay protection: enforced
 - Deterministic receipts: enforced
-- Signed approval validation: implemented (Ed25519)
-- Execution allow-list: supported (optional)
+- Ed25519 signature validation: implemented
+- Execution allow-list: supported
 - No outbound network calls during execution
-- No external dependencies required for testing
+- No external dependencies required for local testing
 
 ---
 
-## TL;DR
+## Summary
 
-If your AI touches production,
+If your AI system touches production infrastructure,
 separate authority from execution.
 
-OpenExec is the minimal adapter that makes that possible.
+OpenExec is the minimal deterministic boundary
+that makes that separation enforceable.
