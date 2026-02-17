@@ -163,6 +163,20 @@ Please provide:
 
 ---
 
+## 8. Threat Mapping (STRIDE-Lite)
+
+| Threat | Mitigation |
+|--------|------------|
+| Spoofed approval | Ed25519 signature verification |
+| Replay attack | Nonce registry + receipt hashing |
+| Parameter mutation | Approval hash binding |
+| Silent execution | Mandatory receipt emission |
+| Privilege escalation | Operator-enforced allow-list |
+| Network exfiltration | No outbound HTTP/RPC during execution |
+| Remote DB misuse | Explicit operator configuration required |
+
+---
+
 OpenExec is intentionally minimal.
 Security guarantees are explicit and bounded.
 Operators must provide infrastructure isolation.

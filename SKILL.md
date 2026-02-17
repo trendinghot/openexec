@@ -1,7 +1,7 @@
 ---
 name: OpenExec
 slug: openexec
-version: 0.1.8
+version: 0.1.9
 category: infrastructure/governance/execution
 runtime: python
 entrypoint: main:app
@@ -17,7 +17,7 @@ env:
     - CLAWSHIELD_TENANT_ID
     - OPENEXEC_ALLOWED_ACTIONS
     - OPENEXEC_DB_URL
-description: Deterministic execution adapter that runs only with a signed approval artifact (ClawShield mode) and emits verifiable receipts. Performs no outbound HTTP or governance calls.
+description: Source-distributed deterministic execution service with pinned dependencies. Runs only with a signed approval artifact (ClawShield mode) and emits verifiable receipts. Performs no outbound HTTP or governance calls. No runtime package installation or dynamic downloads occur.
 ---
 
 # OpenExec — Governed Deterministic Execution (Skill)

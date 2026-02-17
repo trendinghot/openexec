@@ -449,6 +449,33 @@ OpenExec is an execution boundary -- not a sandbox.
 For a formal description of its security assumptions, threat model,
 network model, and production hardening checklist, see [SECURITY.md](SECURITY.md).
 
+### Threat Boundary Diagram
+
+```
+Untrusted Proposal Layer
+        |
+        v
++------------------------------+
+|        OpenExec              |
+|  Deterministic Boundary      |
+|  - Replay protection         |
+|  - Signature verification    |
+|  - Receipt generation        |
++------------------------------+
+        |
+        v
+Optional Governance Layer (ClawShield)
+        |
+        v
+Optional Witness Layer (Ledger)
+
+Trust Assumptions:
+- Proposal input is untrusted
+- Approval artifact must be valid
+- Execution handlers run with host privileges
+- Infrastructure isolation is external
+```
+
 Operators are responsible for:
 
 - Host isolation
@@ -475,6 +502,30 @@ Infrastructure isolation is intentionally externalized.
 | Database network I/O | Only if remote DB explicitly configured |
 | OS-level sandboxing | No (external responsibility) |
 | Policy decision engine | No (external responsibility) |
+
+---
+
+## Production Hardening (Minimum)
+
+- Bind to `127.0.0.1` unless behind reverse proxy
+- Run inside container or VM
+- Do not run as root
+- Restrict `OPENEXEC_ALLOWED_ACTIONS`
+- Use local SQLite unless remote DB explicitly required
+- Keep ClawShield private key offline (OpenExec only needs public key)
+- Pin dependencies (already enforced)
+
+---
+
+## Security Changelog
+
+### v0.1.9
+
+- Eliminated packaging ambiguity
+- Added formal threat boundary diagram
+- Added STRIDE-lite threat mapping
+- Clarified installation model as source-distributed
+- No runtime logic changes
 
 ---
 
