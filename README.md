@@ -16,6 +16,17 @@ It should not execute what it merely proposes.
 
 OpenExec enforces that separation.
 
+### Static Architecture Guarantees
+
+OpenExec guarantees:
+
+- No dynamic code loading
+- No `eval`/`exec` usage
+- No runtime plugin system
+- No remote code execution primitives
+- Static handler registry only
+- No self-modifying behavior
+
 ---
 
 ## Core Principle

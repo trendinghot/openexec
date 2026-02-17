@@ -177,6 +177,89 @@ Please provide:
 
 ---
 
+## 9. Code Loading Model
+
+OpenExec does not perform dynamic code loading.
+
+Specifically:
+
+- No runtime module imports based on user input
+- No use of importlib for dynamic resolution
+- No plugin discovery from filesystem
+- No remote code fetching
+- No execution of downloaded artifacts
+- No handler registration via API
+
+All execution handlers must be statically defined in source code
+and registered during application startup.
+
+There is no runtime extension mechanism.
+
+---
+
+## 10. Code Execution Primitives
+
+OpenExec does not use:
+
+- `eval()`
+- `exec()`
+- `compile()`
+- `ast`-based dynamic execution
+- `subprocess` execution of user input
+- `os.system()`
+- `pickle` deserialization of untrusted input
+
+User input is never interpreted as executable code.
+
+All execution flows invoke statically defined Python callables.
+
+---
+
+## 11. Handler Registry Model
+
+Execution handlers are:
+
+- Defined statically in source
+- Registered at application startup
+- Not modifiable at runtime
+- Not extensible via API
+- Not loadable from remote sources
+
+The registry is sealed at boot.
+
+Operators may modify source code intentionally,
+but there is no dynamic registration surface exposed to users.
+
+---
+
+## 12. Self-Modification
+
+OpenExec does not modify its own code,
+write executable files,
+or alter system configuration.
+
+It does not install packages at runtime.
+It does not download additional modules.
+It does not mutate its own execution graph.
+
+---
+
+## 13. Remote Code Execution Clarification
+
+OpenExec can execute registered Python handlers.
+This is an intentional architectural boundary design.
+
+However:
+
+- Handlers must be statically defined
+- No dynamic code evaluation is supported
+- No user-supplied code execution is possible
+- No runtime code injection primitives exist
+
+Execution is deterministic and bounded to registered callables only.
+
+---
+
 OpenExec is intentionally minimal.
 Security guarantees are explicit and bounded.
 Operators must provide infrastructure isolation.

@@ -1,7 +1,7 @@
 ---
 name: OpenExec
 slug: openexec
-version: 0.1.9
+version: 0.1.10
 category: infrastructure/governance/execution
 runtime: python
 entrypoint: main:app
@@ -212,3 +212,13 @@ This skill intentionally separates:
 
 - Execution enforcement (OpenExec)
 - Infrastructure isolation (operator responsibility)
+
+### Execution Safety Guarantees
+
+This skill:
+
+- Does not dynamically load code
+- Does not evaluate user input as code
+- Uses a static handler registry
+- Does not install packages at runtime
+- Does not fetch remote execution logic
